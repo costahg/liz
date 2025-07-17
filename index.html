@@ -5,99 +5,77 @@
   <title>Chat n8n – Ape Proprio Dark</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      background: #0B1220;
-      color: #FFFFFF;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-    }
+  body {
+    background: #0B1220;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  }
   #chat-container {
     background: #14203A;
     border-radius: 18px;
     box-shadow: 0 8px 32px #000c;
-    max-width: 370px;
-    width: 100%;
-    max-height: 520px;
-    height: 100%;
+    width: 370px;
+    height: 520px;              /* <- altura fixa, funciona igual a imagem 2! */
     display: flex;
     flex-direction: column;
     overflow: hidden;
     border: 2px solid #0057FF;
   }
   #chat-messages {
-    flex: 1;
+    flex: 1 1 auto;             /* <- ESSENCIAL: faz ocupar o espaço restante */
+    min-height: 0;              /* <- ESSENCIAL para scroll funcionar dentro do flex */
     padding: 20px 16px 12px 16px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-height: 0;           
-    max-height: 380px;
   }
-    .msg {
-      max-width: 78%;
-      padding: 10px 14px;
-      border-radius: 14px;
-      line-height: 1.5;
-      word-break: break-word;
-      font-size: 16px;
-    }
-    .user {
-      align-self: flex-end;
-      background: #182344;
-      color: #11C3FF;
-      border: 1px solid #0057FF;
-    }
-    .bot {
-      align-self: flex-start;
-      background: #11224D;
-      color: #B6C2D1;
-      border: 1px solid #003B99;
-    }
-    #chat-input-area {
-      display: flex;
-      gap: 8px;
-      background: #101729;
-      padding: 16px;
-      border-top: 1px solid #003B99;
-    }
-    #chat-input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #003B99;
-      background: #14203A;
-      color: #FFFFFF;
-      font-size: 16px;
-      outline: none;
-    }
-    #chat-send {
-      background: #0057FF;
-      border: none;
-      color: #fff;
-      font-weight: bold;
-      border-radius: 8px;
-      padding: 10px 18px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    #chat-send:active, #chat-send:hover {
-      background: #11C3FF;
-      color: #14203A;
-    }
-    ::-webkit-scrollbar {
-      width: 8px;
-      background: #14203A;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #003B99;
-      border-radius: 6px;
-    }
+  #chat-input-area {
+    display: flex;
+    gap: 8px;
+    background: #101729;
+    padding: 16px;
+    border-top: 1px solid #003B99;
+    flex-shrink: 0;            /* <- ESSENCIAL: input nunca some, nunca sai do container */
+  }
+  #chat-input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #003B99;
+    background: #14203A;
+    color: #FFFFFF;
+    font-size: 16px;
+    outline: none;
+  }
+  #chat-send {
+    background: #0057FF;
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  #chat-send:active, #chat-send:hover {
+    background: #11C3FF;
+    color: #14203A;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    background: #14203A;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #003B99;
+    border-radius: 6px;
+  }
   </style>
 </head>
 <body>
