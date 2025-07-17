@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat n8n – Dark</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #111;
+      color: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    }
+    #chat-container {
+      background: #181818;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px #000c;
+      width: 370px;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #chat-messages {
+      flex: 1;
+      padding: 20px 16px 12px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg {
+      max-width: 78%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+      font-size: 16px;
+    }
+    .user {
+      align-self: flex-end;
+      background: #222;
+      color: #d6ffe2;
+    }
+    .bot {
+      align-self: flex-start;
+      background: #232a2f;
+      color: #d9f3fd;
+    }
+    #chat-input-area {
+      display: flex;
+      gap: 8px;
+      background: #161616;
+      padding: 16px;
+      border-top: 1px solid #2224;
+    }
+    #chat-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #212121;
+      color: #fafafa;
+      font-size: 16px;
+      outline: none;
+    }
+    #chat-send {
+      background: #25d366;
+      border: none;
+      color: #111;
+      font-weight: bold;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #chat-send:active {
+      background: #1cb655;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      background: #191919;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <div id="chat-messages"></div>
+    <form id="chat-input-area" autocomplete="off">
+      <input id="chat-input" type="text" placeholder="Digite sua mensagem..." autocomplete="off" />
+      <button id="chat-send" type="submit">Enviar</button>
+    </form>
+  </div>
+  <script>
+    const chat = document.getElementById('chat-messages')
+    const form = document.getElementById('chat-input-area')
+    const input = document.getElementById('chat-input')
+
+    function addMsg(msg, sender) {
+      const div = document.createElement('div')
+      div.className = `msg ${sender}`
+      div.textContent = msg
+      chat.appendChild(div)
+      chat.scrollTop = chat.scrollHeight
+    }
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault()
+      const msg = input.value.trim()
+      if (!msg) return
+      addMsg(msg, 'user')
+      input.value = ''
+      addMsg('Digitando...', 'bot')
+      // Altere o endpoint abaixo pelo seu webhook do n8n:
+      try {
+        const resp = await fetch('https://SEU_WEBHOOK_AQUI', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({msg})
+        })
+        let data = await resp.json()
+        // Ajuste o nome do campo da resposta conforme o retorno do n8n!
+        document.querySelectorAll('.bot').forEach(el => {
+          if(el.textContent === 'Digitando...') el.remove()
+        })
+        addMsg(data.resposta || '[Sem resposta]', 'bot')
+      } catch (err) {
+        document.querySelectorAll('.bot').forEach(el => {
+          if(el.textContent === 'Digitando...') el.remove()
+        })
+        addMsg('Ops, erro na conexão 🥲', 'bot')
+      }
+    })
+  </script>
+</body>
+</html>
