@@ -33,20 +33,19 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 12px; /* mais espaço entre as mensagens */
+      gap: 12px;
     }
     .msg {
-      display: inline-block;
-      clear: both;
+      display: flex;
+      max-width: 78%;
       padding: 12px 18px;
       border-radius: 20px;
       font-size: 16px;
-      max-width: 78%;
       word-break: break-word;
       box-shadow: 0 2px 12px #0002;
       position: relative;
-      margin-bottom: 2px;
-      margin-top: 2px;
+      margin-bottom: 4px;
+      margin-top: 4px;
     }
     .user {
       align-self: flex-end;
@@ -59,6 +58,21 @@
       margin-left: 32px;
       margin-right: 0;
       text-align: right;
+      justify-content: flex-end;
+      /* "Pontinha" tipo iPhone */
+      position: relative;
+    }
+    .user::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      bottom: 0;
+      width: 16px;
+      height: 20px;
+      background: transparent;
+      border-bottom-left-radius: 16px 14px;
+      box-shadow: 0 4px 0 0 #1952ff;
+      z-index: 1;
     }
     .bot {
       align-self: flex-start;
@@ -71,6 +85,21 @@
       margin-right: 32px;
       margin-left: 0;
       text-align: left;
+      justify-content: flex-start;
+      /* "Pontinha" tipo iPhone */
+      position: relative;
+    }
+    .bot::after {
+      content: "";
+      position: absolute;
+      left: -10px;
+      bottom: 0;
+      width: 16px;
+      height: 20px;
+      background: transparent;
+      border-bottom-right-radius: 16px 14px;
+      box-shadow: 0 4px 0 0 #1b273b;
+      z-index: 1;
     }
     #chat-input-area {
       display: flex;
@@ -139,13 +168,10 @@
 
     // Método para ENVIAR mensagem para o n8n e RECEBER a resposta
     async function sendMsgToBot(message) {
-      // Mostra mensagem do usuário
       addMsg(message, 'user');
-      // Mostra loading do bot
       addMsg('Digitando...', 'bot');
 
       try {
-        // FAÇA O REPLACE pelo seu webhook real:
         const response = await fetch('https://n8.lizapeproprio.shop/webhook/webhook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -153,12 +179,9 @@
         });
         const data = await response.json();
 
-        // Remove o "Digitando..." antes de mostrar a resposta real
         document.querySelectorAll('.bot').forEach(el => {
           if (el.textContent === 'Digitando...') el.remove();
         });
-
-        // Mostra a resposta do bot
         addMsg(data.resposta || '[Sem resposta do bot]', 'bot');
       } catch (err) {
         document.querySelectorAll('.bot').forEach(el => {
@@ -168,7 +191,6 @@
       }
     }
 
-    // Evento de submit do formulário
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       const message = input.value.trim();
