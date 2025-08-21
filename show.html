@@ -277,89 +277,93 @@
 
     <!-- Rodapé de verificação -->
     <div class="footer">
-      <h3>Fórmulas, dados e conferência, como cada valor foi obtido</h3>
+      <h3>Como conferimos as contas, em linguagem simples</h3>
       <div class="grid grid-2" style="gap:16px; grid-template-columns: 2fr 3fr;">
+        <!-- Coluna esquerda: Dados e Regras de cálculo -->
         <div>
           <div class="card">
-            <div class="card-header"><div class="card-title">A. Parâmetros</div></div>
+            <div class="card-header"><div class="card-title">A. Dados usados</div></div>
             <div class="card-content">
               <ul>
                 <li>Semanas por mês: <span id="weeksPerMonth"></span></li>
-                <li>Atual: 34h × R$18 e 12h × R$30</li>
-                <li>Desloc. atual: 10 min/dia × 5 dias</li>
-                <li>Oferta: 35h × R$12</li>
-                <li>Desloc. oferta: 3h/dia × 6 dias</li>
-                <li>Salário pós promo: R$6.000</li>
-                <li>Selic: 15% a.a., custódia: 0,2% a.a.</li>
-                <li>IR: 12m 20%, 24m 15% (sobre rendimentos)</li>
+                <li>Trabalho atual: 34h por R$18 e 12h por R$30 por semana</li>
+                <li>Deslocamento atual: 10 minutos por dia × 5 dias</li>
+                <li>Oferta: 35h por R$12 por semana</li>
+                <li>Deslocamento na oferta: 3 horas por dia × 6 dias</li>
+                <li>Salário após promoção (oferta): R$6.000 por mês</li>
+                <li>Juros de referência: Selic 15% ao ano; taxa de custódia 0,2% ao ano</li>
+                <li>Imposto de Renda sobre rendimentos: 12 meses 20%, 24 meses 15%</li>
               </ul>
             </div>
           </div>
           <div class="card" style="margin-top:12px">
-            <div class="card-header"><div class="card-title">B. Fórmulas</div></div>
+            <div class="card-header"><div class="card-title">B. Como calculamos</div></div>
             <div class="card-content">
               <ul>
-                <li>1) Semanal atual = 34×18 + 12×30</li>
-                <li>2) Mensal = semanal × semanas/mês</li>
-                <li>3) Semanal oferta = 35×12</li>
-                <li>4) Δ mensal = mensal atual − mensal oferta</li>
-                <li>5) Desloc. semanal (h) = (min/dia ÷ 60) × dias/sem</li>
-                <li>6) Valor/h efetivo = pagamento semanal ÷ (horas trabalho + horas desloc.)</li>
-                <li>7) rₘ bruta = Selic/12, rₘ líquida pré IR = (Selic − custódia)/12</li>
-                <li>8) FV aportes = PMT × [((1+r)ⁿ − 1)/r]</li>
-                <li>9) Perda acumulada = Δ × n</li>
-                <li>10) Ganho pós promo = 6000 − mensal atual</li>
-                <li>11) Payback (meses) = ⌈perda ÷ ganho pós promo⌉</li>
+                <li>1) Salário da semana (atual) = 34×18 + 12×30</li>
+                <li>2) Salário do mês = salário da semana × semanas por mês</li>
+                <li>3) Salário da semana (oferta) = 35×12</li>
+                <li>4) Diferença do mês = mês do atual − mês da oferta</li>
+                <li>5) Horas de deslocamento na semana = (minutos por dia ÷ 60) × dias por semana</li>
+                <li>6) Valor por hora real = pagamento da semana ÷ (horas de trabalho + horas de deslocamento)</li>
+                <li>7) Juros ao mês (sem descontos) = Selic ÷ 12</li>
+                <li>8) Juros ao mês (após custódia) = (Selic − custódia) ÷ 12</li>
+                <li>9) Total juntado com depósitos mensais = depósito mensal × fator de crescimento ao longo dos meses</li>
+                <li>10) Perda acumulada antes da promoção = diferença do mês × número de meses</li>
+                <li>11) Ganho mensal após promoção = 6000 − mês do atual</li>
+                <li>12) Meses para empatar (payback) = perda acumulada ÷ ganho mensal após promoção (arredondado para cima)</li>
               </ul>
             </div>
           </div>
         </div>
+
+        <!-- Coluna direita: Passo a passo com números preenchidos -->
         <div>
           <div class="card">
-            <div class="card-header"><div class="card-title">C. Passos numéricos</div></div>
+            <div class="card-header"><div class="card-title">C. Passo a passo com os seus números</div></div>
             <div class="card-content">
-              <div style="font-weight:700;margin-bottom:6px">D1. Salários e hora efetiva</div>
+              <div style="font-weight:700;margin-bottom:6px">C1. Salários e valor por hora</div>
               <ul>
-                <li>1) Semanal atual = 34×18 + 12×30 = <span id="vSemAtual"></span></li>
-                <li>2) Mensal atual = <span id="vSemAtual2"></span> × <span id="vSemanas"></span> = <span id="vMenAtual"></span></li>
-                <li>3) Semanal oferta = 35×12 = <span id="vSemOferta"></span></li>
-                <li>4) Mensal oferta = <span id="vSemOferta2"></span> × <span id="vSemanas2"></span> = <span id="vMenOferta"></span></li>
-                <li>5) Δ mensal = <span id="vMenAtual2"></span> − <span id="vMenOferta2"></span> = <span id="vDelta"></span></li>
-                <li>6) Desloc. atual = 10/60 × 5 = <span id="vDeslAtual"></span> h/sem</li>
-                <li>7) Desloc. oferta = 3 × 6 = <span id="vDeslOferta"></span> h/sem</li>
-                <li>8) Valor/h atual = <span id="vSemAtual3"></span> ÷ <span id="vHorasAtuais"></span> = <span id="vHoraAtual"></span>/h</li>
-                <li>9) Valor/h oferta = <span id="vSemOferta3"></span> ÷ <span id="vHorasOferta"></span> = <span id="vHoraOferta"></span>/h</li>
+                <li>Salário da semana (atual) = 34×18 + 12×30 = <span id="vSemAtual"></span></li>
+                <li>Salário do mês (atual) = <span id="vSemAtual2"></span> × <span id="vSemanas"></span> = <span id="vMenAtual"></span></li>
+                <li>Salário da semana (oferta) = 35×12 = <span id="vSemOferta"></span></li>
+                <li>Salário do mês (oferta) = <span id="vSemOferta2"></span> × <span id="vSemanas2"></span> = <span id="vMenOferta"></span></li>
+                <li>Diferença do mês = <span id="vMenAtual2"></span> − <span id="vMenOferta2"></span> = <span id="vDelta"></span></li>
+                <li>Deslocamento por semana (atual) = 10/60 × 5 = <span id="vDeslAtual"></span> h</li>
+                <li>Deslocamento por semana (oferta) = 3 × 6 = <span id="vDeslOferta"></span> h</li>
+                <li>Valor por hora real (atual) = <span id="vSemAtual3"></span> ÷ <span id="vHorasAtuais"></span> = <span id="vHoraAtual"></span> por hora</li>
+                <li>Valor por hora real (oferta) = <span id="vSemOferta3"></span> ÷ <span id="vHorasOferta"></span> = <span id="vHoraOferta"></span> por hora</li>
               </ul>
               <div class="sep"></div>
-              <div style="font-weight:700;margin-bottom:6px">D2. Cenários de 12m e 24m</div>
+              <div style="font-weight:700;margin-bottom:6px">C2. Cenários de 12 e 24 meses</div>
               <ul>
-                <li>rₘ bruta = <span id="vRmBru"></span>, rₘ líquida pré IR = <span id="vRmLiq"></span></li>
+                <li>Juros ao mês (sem descontos) = <span id="vRmBru"></span>; Juros ao mês (após custódia) = <span id="vRmLiq"></span></li>
               </ul>
               <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr">
                 <div>
                   <div style="font-weight:700">12 meses</div>
                   <ul>
-                    <li>Perda = <span id="vDelta12"></span> × 12 = <span id="vPerda12"></span></li>
-                    <li>Ganho pós promo = 6000 − <span id="vMenAtual3"></span> = <span id="vGanho12"></span></li>
-                    <li>Payback = ⌈<span id="vPerda12b"></span> ÷ <span id="vGanho12b"></span>⌉ = <span id="vPay12"></span> meses</li>
-                    <li>FV líquido = PMT × ((1+r)^{12} − 1)/r = <span id="vFVLiq12"></span></li>
-                    <li>Renda bruta = FV_bruto × rₘ bruta = <span id="vRendaBru12"></span></li>
-                    <li>Renda líquida ≈ FV_líquido × rₘ líquida × (1−20%) = <span id="vRendaLiq12"></span></li>
+                    <li>Perda acumulada = <span id="vDelta12"></span> × 12 = <span id="vPerda12"></span></li>
+                    <li>Ganho mensal após promoção = 6000 − <span id="vMenAtual3"></span> = <span id="vGanho12"></span></li>
+                    <li>Meses para empatar = <span id="vPerda12b"></span> ÷ <span id="vGanho12b"></span> = <span id="vPay12"></span> meses</li>
+                    <li>Quanto juntaria em 12 meses (com depósitos mensais) = <span id="vFVLiq12"></span> (base antes do IR)</li>
+                    <li>Renda mensal estimada sobre o saldo (bruta) = <span id="vRendaBru12"></span></li>
+                    <li>Renda mensal estimada sobre o saldo (após IR) = <span id="vRendaLiq12"></span></li>
                   </ul>
                 </div>
                 <div>
                   <div style="font-weight:700">24 meses</div>
                   <ul>
-                    <li>Perda = <span id="vDelta24"></span> × 24 = <span id="vPerda24"></span></li>
-                    <li>Ganho pós promo = 6000 − <span id="vMenAtual4"></span> = <span id="vGanho24"></span></li>
-                    <li>Payback = ⌈<span id="vPerda24b"></span> ÷ <span id="vGanho24b"></span>⌉ = <span id="vPay24"></span> meses</li>
-                    <li>FV líquido = PMT × ((1+r)^{24} − 1)/r = <span id="vFVLiq24"></span></li>
-                    <li>Renda bruta = FV_bruto × rₘ bruta = <span id="vRendaBru24"></span></li>
-                    <li>Renda líquida ≈ FV_líquido × rₘ líquida × (1−15%) = <span id="vRendaLiq24"></span></li>
+                    <li>Perda acumulada = <span id="vDelta24"></span> × 24 = <span id="vPerda24"></span></li>
+                    <li>Ganho mensal após promoção = 6000 − <span id="vMenAtual4"></span> = <span id="vGanho24"></span></li>
+                    <li>Meses para empatar = <span id="vPerda24b"></span> ÷ <span id="vGanho24b"></span> = <span id="vPay24"></span> meses</li>
+                    <li>Quanto juntaria em 24 meses (com depósitos mensais) = <span id="vFVLiq24"></span> (base antes do IR)</li>
+                    <li>Renda mensal estimada sobre o saldo (bruta) = <span id="vRendaBru24"></span></li>
+                    <li>Renda mensal estimada sobre o saldo (após IR) = <span id="vRendaLiq24"></span></li>
                   </ul>
                 </div>
               </div>
-              <div class="muted" style="font-size:12px;margin-top:6px">Payback equivale aos meses necessários para compensar a perda acumulada com o ganho mensal pós promoção.</div>
+              <div class="muted" style="font-size:12px;margin-top:6px">“Empatar” significa: o tempo necessário para recuperar a perda acumulada antes da promoção usando o ganho mensal maior que vem depois da promoção.</div>
             </div>
           </div>
         </div>
