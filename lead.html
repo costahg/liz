@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lead Router</title>
+  <style>
+    :root{
+      --pageBg:#0B1220; --cardBg:#14203A; --sectionBg:#101729; --border:#003B99;
+      --primary:#0057FF; --primaryHover:#11C3FF; --text:#FFFFFF; --subtle:#B6C2D1;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--pageBg); color:var(--text)}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    .grid{display:grid; grid-template-columns:1fr; gap:24px}
+    @media (min-width: 768px){ .grid{ grid-template-columns:1fr 1fr; } }
+
+    .card{background:var(--cardBg); border:1px solid var(--border); border-radius:18px; box-shadow:0 8px 32px #000c; padding:24px}
+    label{display:block; font-size:14px; color:var(--subtle); margin-bottom:6px}
+    input[type="text"], input[type="tel"]{ width:100%; background:var(--cardBg); border:1px solid var(--border); color:var(--text); padding:12px 14px; border-radius:12px; outline:none }
+    .quality{ display:flex; gap:10px }
+    .qbtn{ background:var(--cardBg); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:12px; font-size:14px; opacity:.85; cursor:pointer }
+    .qbtn.active{ background:var(--primary); color:var(--pageBg); font-weight:600; opacity:1 }
+
+    .actions{ display:flex; justify-content:flex-start; padding-top:8px }
+    .btn{ display:inline-flex; align-items:center; gap:8px; background:var(--primary); color:var(--text); border:none; border-radius:12px; padding:10px 16px; font-weight:600; cursor:pointer }
+    .btn:hover{ filter:brightness(1.05) }
+
+    .queue-title{ display:flex; align-items:center; gap:8px; font-size:18px; font-weight:600; margin-bottom:12px }
+    .row{ display:flex; align-items:center; gap:10px; background:var(--sectionBg); border:1px solid var(--border); border-radius:12px; padding:12px }
+    .row + .row{ margin-top:10px }
+    .radio{ accent-color:#3b82f6 }
+    .row-name{ font-weight:600 }
+    .row-phone{ font-size:12px; color:var(--subtle) }
+    .row-ops button{ background:transparent; border:1px solid var(--border); color:var(--text); border-radius:10px; padding:6px 8px; cursor:pointer }
+
+    .scrollbox{ max-height:340px; overflow:auto; padding-right:6px }
+    .scrollbox{ scrollbar-width:thin; scrollbar-color: var(--border) var(--cardBg) }
+    .scrollbox::-webkit-scrollbar{ width:10px }
+    .scrollbox::-webkit-scrollbar-track{ background:var(--cardBg); border-radius:8px }
+    .scrollbox::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; border:2px solid var(--cardBg) }
+    .scrollbox:hover::-webkit-scrollbar-thumb{ background:var(--primary) }
+
+    .add-grid{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top:14px }
+    @media (min-width: 640px){ .add-grid{ grid-template-columns: 1fr 1fr; } }
+    .add-actions{ grid-column: 1 / -1; display:flex; justify-content:flex-start }
+
+    .toast{ position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:#059669; color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 8px 30px #0007; font-size:14px }
+    .toast.err{ background:#e11d48 }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="grid">
+      <!-- Lead Form -->
+      <section class="card">
+        <form id="lead-form">
+          <div>
+            <label>Nome</label>
+            <input id="lead-name" type="text" placeholder="Digite o nome" autocomplete="off" />
+          </div>
+          <div style="margin-top:12px">
+            <label>Telefone</label>
+            <input id="lead-phone" type="tel" placeholder="(11) 9XXXX-XXXX" autocomplete="off" />
+          </div>
+          <div style="margin-top:12px">
+            <label>Qualidade</label>
+            <div class="quality">
+              <button type="button" class="qbtn" data-qv="frio">❄️ Frio</button>
+              <button type="button" class="qbtn" data-qv="morno">🌤️ Morno</button>
+              <button type="button" class="qbtn" data-qv="quente">🔥 Quente</button>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="send-btn" class="btn" type="submit">Enviar</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Queue Manager -->
+      <section class="card">
+        <div class="queue-title">Fila de Corretores</div>
+        <div id="queue-list" class="scrollbox"></div>
+        <form id="add-agent" class="add-grid">
+          <input id="agent-name" type="text" placeholder="Nome do corretor" />
+          <input id="agent-phone" type="tel" placeholder="Telefone do corretor" />
+          <div class="add-actions">
+            <button class="btn" type="submit">Adicionar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script>
+  (function(){
+    // ------- Config
+    const N8N_WEBHOOK_URL = (window.ENV && window.ENV.N8N_WEBHOOK_URL) || "https://n8.lizapeproprio.shop/webhook/lead";
+
+    // ------- State
+    let quality = "";
+    let selectedAgentId = null; // manual selection
+    let queue = [
+      { id: rnd(), name: "Ana", phone: "+55 11 99999-0001" },
+      { id: rnd(), name: "Bruno", phone: "+55 11 99999-0002" },
+      { id: rnd(), name: "Clara", phone: "+55 11 99999-0003" }
+    ];
+
+    // ------- Utils
+    function rnd(){ return (Math.random().toString(16).slice(2)+Math.random().toString(16).slice(2)).slice(0,16); }
+    function onlyDigits(s){ let out=""; for(let i=0;i<(s||"").length;i++){ const c=s[i]; if(c>='0'&&c<='9') out+=c; } return out }
+    function toE164BR(v){ const d=onlyDigits(v); if(!d) return ""; return d.startsWith("55")? "+"+d : "+55"+d }
+    function formatBR(v){ const d=onlyDigits(v); if(!d) return ""; let local=d; if(d.startsWith("55") && d.length>11) local=d.slice(2); const dd=local.slice(0,2); const body=local.slice(2); if(body.length>=9) return `(${dd}) ${body.slice(0,5)}-${body.slice(5,9)}`; if(body.length>4) return `(${dd}) ${body.slice(0,4)}-${body.slice(4)}`; if(body.length>0) return `(${dd}) ${body}`; return `(${dd}` }
+
+    function qualityLabel(v){
+      if(v==='frio') return '❄️ Frio';
+      if(v==='morno') return '🌤️ Morno';
+      if(v==='quente') return '🔥 Quente';
+      return v || '';
+    }
+
+    function toast(msg, err){ const el=document.getElementById('toast'); el.textContent=msg; el.className='toast'+(err?' err':''); el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.display='none' }, 3000) }
+
+    // ------- Render queue
+    const list = document.getElementById('queue-list');
+    function renderQueue(){
+      list.innerHTML = '';
+      queue.forEach((a, idx)=>{
+        const row = document.createElement('div'); row.className='row';
+        // radio
+        const r = document.createElement('input'); r.type='radio'; r.name='manual'; r.className='radio'; r.checked = (selectedAgentId===a.id);
+        r.addEventListener('change', ()=>{ selectedAgentId = (selectedAgentId===a.id? null : a.id); renderQueue(); });
+        row.appendChild(r);
+        // info
+        const fx = document.createElement('div'); fx.style.flex='1';
+        const nm = document.createElement('div'); nm.className='row-name'; nm.textContent=a.name; fx.appendChild(nm);
+        const ph = document.createElement('div'); ph.className='row-phone'; ph.textContent = toE164BR(a.phone); fx.appendChild(ph);
+        row.appendChild(fx);
+        // ops
+        const ops = document.createElement('div'); ops.className='row-ops';
+        const up = document.createElement('button'); up.type='button'; up.title='Subir'; up.textContent='↑'; up.addEventListener('click', ()=>move(idx,-1)); ops.appendChild(up);
+        const dn = document.createElement('button'); dn.type='button'; dn.title='Descer'; dn.textContent='↓'; dn.addEventListener('click', ()=>move(idx,+1)); ops.appendChild(dn);
+        const rm = document.createElement('button'); rm.type='button'; rm.title='Remover'; rm.textContent='🗑️'; rm.addEventListener('click', ()=>remove(a.id)); ops.appendChild(rm);
+        row.appendChild(ops);
+        list.appendChild(row);
+      })
+      if(queue.length===0){ const em=document.createElement('div'); em.style.color='var(--subtle)'; em.style.fontSize='14px'; em.textContent='Nenhum corretor na fila.'; list.appendChild(em) }
+    }
+
+    function move(index, dir){
+      const t=index+dir; if(t<0||t>=queue.length) return; const arr=[...queue]; const tmp=arr[index]; arr[index]=arr[t]; arr[t]=tmp; queue=arr; renderQueue();
+    }
+    function remove(id){ queue = queue.filter(a=>a.id!==id); if(selectedAgentId===id) selectedAgentId=null; renderQueue(); }
+    function addAgent(name, phone){ queue=[...queue, { id:rnd(), name:name.trim(), phone:toE164BR(phone) }]; renderQueue(); }
+
+    // ------- Lead form
+    const qBtns = Array.from(document.querySelectorAll('.qbtn'));
+    qBtns.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        quality = btn.getAttribute('data-qv');
+        qBtns.forEach(b=>b.classList.toggle('active', b===btn));
+      })
+    })
+    const nameEl = document.getElementById('lead-name');
+    const phoneEl = document.getElementById('lead-phone');
+    phoneEl.addEventListener('input', ()=>{ phoneEl.value = formatBR(phoneEl.value) });
+
+    document.getElementById('lead-form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const nm = (nameEl.value||'').trim();
+      const ph = phoneEl.value;
+      if(!nm) return toast('Informe o nome', true);
+      if(onlyDigits(ph).length < 10) return toast('Telefone inválido', true);
+      if(!quality) return toast('Selecione a qualidade do lead', true);
+      if(!queue.length) return toast('Fila vazia', true);
+
+      const target = queue.find(a=>a.id===selectedAgentId) || queue[0];
+      const payload = {
+        lead: { name: nm, phone: toE164BR(ph), quality: qualityLabel(quality), quality_value: quality },
+        assignee: { name: target.name, phone: toE164BR(target.phone) },
+        routing: { mode: selectedAgentId? 'manual' : 'round_robin', queue_snapshot: queue.map(({id,name,phone})=>({id,name,phone:toE164BR(phone)})) },
+        meta: { source: 'lead-router-ui', ts: new Date().toISOString() }
+      };
+
+      try{
+        const res = await fetch(N8N_WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), mode:'cors', credentials:'omit' });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        toast(`Lead enviado para ${target.name}`);
+        nameEl.value=''; phoneEl.value=''; quality=''; qBtns.forEach(b=>b.classList.remove('active'));
+        // Rotaciona a fila
+        if(selectedAgentId){
+          queue = [...queue.filter(a=>a.id!==selectedAgentId), queue.find(a=>a.id===selectedAgentId)];
+          selectedAgentId = null;
+        } else {
+          if(queue.length>1){ const [first, ...rest] = queue; queue = [...rest, first]; }
+        }
+        renderQueue();
+      }catch(err){ toast('Falha no envio. Verifique o n8n.', true); }
+    })
+
+    // Add agent form
+    const addForm = document.getElementById('add-agent');
+    const agentName = document.getElementById('agent-name');
+    const agentPhone = document.getElementById('agent-phone');
+    agentPhone.addEventListener('input', ()=>{ agentPhone.value = formatBR(agentPhone.value) });
+    addForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      if(!(agentName.value||'').trim()) return toast('Nome do corretor', true);
+      if(onlyDigits(agentPhone.value).length < 10) return toast('Telefone do corretor inválido', true);
+      addAgent(agentName.value, agentPhone.value);
+      agentName.value=''; agentPhone.value='';
+      toast('Corretor adicionado');
+    })
+
+    // initial render
+    renderQueue();
+  })();
+  </script>
+</body>
+</html>
