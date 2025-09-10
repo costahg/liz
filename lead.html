@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+  <script src="/env.js"></script>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lead Router</title>
@@ -97,7 +98,7 @@
   <script>
   (function(){
     // ------- Config
-    const N8N_WEBHOOK_URL = (window.ENV && window.ENV.N8N_WEBHOOK_URL) || "https://n8.lizapeproprio.shop/webhook/lead";
+    const N8N_WEBHOOK_URL = (window.ENV && window.ENV.N8N_WEBHOOK_URL) || window.N8N_LEAD_WEBHOOK || "https://n8.lizapeproprio.shop/webhook/lead";
 
     // ------- State
     let quality = "";
