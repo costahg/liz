@@ -11,7 +11,8 @@
       --primary:#0057FF; --primaryHover:#11C3FF; --text:#FFFFFF; --subtle:#B6C2D1;
     }
     *{box-sizing:border-box}
-    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--pageBg); color:var(--text)}
+    html,body{height:100%}
+    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--pageBg); color:var(--text); min-height:100vh; display:grid; place-items:center; }
     .container{max-width:1100px;margin:0 auto;padding:24px}
     .grid{display:grid; grid-template-columns:1fr; gap:24px}
     @media (min-width: 768px){ .grid{ grid-template-columns:1fr 1fr; } }
@@ -141,8 +142,8 @@
         row.appendChild(fx);
         // ops
         const ops = document.createElement('div'); ops.className='row-ops';
-        const up = document.createElement('button'); up.type='button'; up.title='Subir'; up.textContent='↑'; up.addEventListener('click', ()=>move(idx,-1)); ops.appendChild(up);
-        const dn = document.createElement('button'); dn.type='button'; dn.title='Descer'; dn.textContent='↓'; dn.addEventListener('click', ()=>move(idx,+1)); ops.appendChild(dn);
+        const up = document.createElement('button'); up.type='button'; up.title='Subir'; up.textContent='⬆️'; up.addEventListener('click', ()=>move(idx,-1)); ops.appendChild(up);
+        const dn = document.createElement('button'); dn.type='button'; dn.title='Descer'; dn.textContent='⬇️'; dn.addEventListener('click', ()=>move(idx,+1)); ops.appendChild(dn);
         const rm = document.createElement('button'); rm.type='button'; rm.title='Remover'; rm.textContent='🗑️'; rm.addEventListener('click', ()=>remove(a.id)); ops.appendChild(rm);
         row.appendChild(ops);
         list.appendChild(row);
