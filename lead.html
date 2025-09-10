@@ -12,20 +12,29 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--pageBg); color:var(--text); min-height:100vh; display:grid; place-items:center; }
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-    /* grid principal: 2 colunas; na esquerda empilhamos Lote + Form Lead */
-    .grid{display:grid; grid-template-columns:1fr 1fr; gap:24px}
-    @media (max-width: 767px){ .grid{ grid-template-columns:1fr; } }
-    .stack{display:flex; flex-direction:column; gap:24px}
+    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--pageBg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+
+    .container{width:100%; max-width:1280px; padding:24px}
+
+    /* grid: 3 colunas no desktop, centralizado */
+    .grid{display:grid; grid-template-columns:1fr; gap:24px}
+    @media (min-width: 900px){ .grid{ grid-template-columns:1fr 1fr; } }
+    @media (min-width: 1200px){ .grid{ grid-template-columns:1fr 1fr 1fr; } }
 
     .card{background:var(--cardBg); border:1px solid var(--border); border-radius:18px; box-shadow:0 8px 32px #000c; padding:24px}
     label{display:block; font-size:14px; color:var(--subtle); margin-bottom:6px}
     input[type="text"], input[type="tel"], textarea{ width:100%; background:var(--cardBg); border:1px solid var(--border); color:var(--text); padding:12px 14px; border-radius:12px; outline:none }
-    textarea{min-height:160px; resize:vertical; white-space:pre}
-    .hint{font-size:12px; color:var(--subtle); margin-top:6px}
+    textarea{min-height:320px; resize:vertical; white-space:pre;}
 
-    .quality{ display:flex; gap:10px }
+    /* barras de rolagem com as cores da marca */
+    .scrollbox{ height:210px; overflow:auto; padding-right:6px }
+    .scrollbox, textarea{ scrollbar-width:thin; scrollbar-color: var(--border) var(--cardBg) }
+    .scrollbox::-webkit-scrollbar, textarea::-webkit-scrollbar{ width:10px }
+    .scrollbox::-webkit-scrollbar-track, textarea::-webkit-scrollbar-track{ background:var(--cardBg); border-radius:8px }
+    .scrollbox::-webkit-scrollbar-thumb, textarea::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; border:2px solid var(--cardBg) }
+    .scrollbox:hover::-webkit-scrollbar-thumb, textarea:hover::-webkit-scrollbar-thumb{ background:var(--primary) }
+
+    .quality{ display:flex; gap:10px; flex-wrap:wrap }
     .qbtn{ background:var(--cardBg); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:12px; font-size:14px; opacity:.85; cursor:pointer }
     .qbtn.active{ background:var(--primary); color:var(--pageBg); font-weight:600; opacity:1 }
 
@@ -40,69 +49,61 @@
     .radio{ accent-color:#3b82f6 }
     .row-name{ font-weight:600 }
     .row-phone{ font-size:12px; color:var(--subtle) }
+    .row-ops{ display:flex; gap:6px }
     .row-ops button{ background:transparent; border:1px solid var(--border); color:var(--text); border-radius:10px; padding:6px 8px; cursor:pointer }
 
-    .scrollbox{ max-height:340px; overflow:auto; padding-right:6px }
-    .scrollbox{ scrollbar-width:thin; scrollbar-color: var(--border) var(--cardBg) }
-    .scrollbox::-webkit-scrollbar{ width:10px }
-    .scrollbox::-webkit-scrollbar-track{ background:var(--cardBg); border-radius:8px }
-    .scrollbox::-webkit-scrollbar-thumb{ background:var(--border); border-radius:8px; border:2px solid var(--cardBg) }
-    .scrollbox:hover::-webkit-scrollbar-thumb{ background:var(--primary) }
-
-    .add-grid{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top:14px }
-    @media (min-width: 640px){ .add-grid{ grid-template-columns: 1fr 1fr; } }
+    /* formulário do corretor: campos na mesma linha */
+    .add-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:14px; align-items:center }
+    @media (max-width: 520px){ .add-grid{ grid-template-columns:1fr } }
     .add-actions{ grid-column: 1 / -1; display:flex; justify-content:flex-start }
-
-    .toast{ position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:#059669; color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 8px 30px #0007; font-size:14px }
-    .toast.err{ background:#e11d48 }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="grid">
-      <!-- COLUNA ESQUERDA (empilhada): Lote + Lead Form -->
-      <div class="stack">
-        <!-- Bulk Sender -->
-        <section class="card">
-          <form id="bulk-form">
-            <div>
-              <label>Envio em Lote (auto: 🌤️ Morno)</label>
-              <textarea id="bulk-input" placeholder="Cole aqui:\nNome 1\nTelefone 1\nNome 2\nTelefone 2\n..."></textarea>
-              <div class="hint">Formato: linhas alternadas <strong>nome</strong> e <strong>número</strong>. Ex.:<br>Maria<br>11988887777<br>João<br>11977776666</div>
-            </div>
-            <div class="actions">
-              <button id="bulk-send" class="btn" type="submit">Enviar lista</button>
-            </div>
-          </form>
-        </section>
+      <!-- ESQUERDA: LOTE -->
+      <section class="card">
+        <form id="bulk-form">
+          <div>
+            <textarea id="bulk-input" placeholder="Cole aqui:
+Nome 1
+Telefone 1
+Nome 2
+Telefone 2
+..."></textarea>
+          </div>
+          <div class="actions">
+            <button id="bulk-send" class="btn" type="submit">Enviar lista</button>
+          </div>
+        </form>
+      </section>
 
-        <!-- Lead Form -->
-        <section class="card">
-          <form id="lead-form">
-            <div>
-              <label>Nome</label>
-              <input id="lead-name" type="text" placeholder="Digite o nome" autocomplete="off" />
+      <!-- MEIO: UNITÁRIO -->
+      <section class="card">
+        <form id="lead-form">
+          <div>
+            <label>Nome</label>
+            <input id="lead-name" type="text" placeholder="Digite o nome" autocomplete="off" />
+          </div>
+          <div style="margin-top:12px">
+            <label>Telefone</label>
+            <input id="lead-phone" type="tel" placeholder="(11) 9XXXX-XXXX" autocomplete="off" />
+          </div>
+          <div style="margin-top:12px">
+            <label>Qualidade</label>
+            <div class="quality">
+              <button type="button" class="qbtn" data-qv="frio">❄️ Frio</button>
+              <button type="button" class="qbtn" data-qv="morno">🌤️ Morno</button>
+              <button type="button" class="qbtn" data-qv="quente">🔥 Quente</button>
             </div>
-            <div style="margin-top:12px">
-              <label>Telefone</label>
-              <input id="lead-phone" type="tel" placeholder="(11) 9XXXX-XXXX" autocomplete="off" />
-            </div>
-            <div style="margin-top:12px">
-              <label>Qualidade</label>
-              <div class="quality">
-                <button type="button" class="qbtn" data-qv="frio">❄️ Frio</button>
-                <button type="button" class="qbtn" data-qv="morno">🌤️ Morno</button>
-                <button type="button" class="qbtn" data-qv="quente">🔥 Quente</button>
-              </div>
-            </div>
-            <div class="actions">
-              <button id="send-btn" class="btn" type="submit">Enviar</button>
-            </div>
-          </form>
-        </section>
-      </div>
+          </div>
+          <div class="actions">
+            <button id="send-btn" class="btn" type="submit">Enviar</button>
+          </div>
+        </form>
+      </section>
 
-      <!-- COLUNA DIREITA: Fila -->
+      <!-- DIREITA: FILA -->
       <section class="card">
         <div class="queue-title">Fila de Corretores</div>
         <div id="queue-list" class="scrollbox"></div>
@@ -114,10 +115,11 @@
           </div>
         </form>
       </section>
+
     </div>
   </div>
 
-  <div id="toast" class="toast" style="display:none"></div>
+  <div id="toast" class="toast" style="display:none; position:fixed; left:50%; bottom:20px; transform:translateX(-50%); background:#059669; color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 8px 30px #0007; font-size:14px"></div>
 
   <script>
   (function(){
@@ -129,20 +131,21 @@
     let selectedAgentId = null; // manual selection
     let bulkSending = false;
     let queue = [
-      { id: rnd(), name: "João",   phone: "+55 11 98877-8972" },
-      { id: rnd(), name: "Gabi", phone: "+55 11 94392-1646" },
+      { id: rnd(), name: "João",  phone: "+55 11 98877-8972" },
+      { id: rnd(), name: "Gabi",  phone: "+55 11 94392-1646" },
       { id: rnd(), name: "Roger", phone: "+55 11 94758-5100" },
-      { id: rnd(), name: "Day", phone: "+55 11 99448-1418" },
+      { id: rnd(), name: "Day",   phone: "+55 11 99448-1418" },
       { id: rnd(), name: "Geane", phone: "+55 11 93919-8329" },
-      { id: rnd(), name: "Ruth", phone: "+55 11 96273-0553" }
+      { id: rnd(), name: "Ruth",  phone: "+55 11 96273-0553" }
     ];
 
-    // ------- Utils
+    // ------- Utils (sem regex para evitar erros)
     function rnd(){ return (Math.random().toString(16).slice(2)+Math.random().toString(16).slice(2)).slice(0,16); }
-    function onlyDigits(s){ let out=""; for(let i=0;i<(s||"").length;i++){ const c=s[i]; if(c>='0'&&c<='9') out+=c; } return out }
+    function onlyDigits(s){ let out=""; s=String(s||""); for(let i=0;i<s.length;i++){ const c=s[i]; if(c>='0'&&c<='9') out+=c; } return out }
     function toE164BR(v){ const d=onlyDigits(v); if(!d) return ""; return d.startsWith("55")? "+"+d : "+55"+d }
     function formatBR(v){ const d=onlyDigits(v); if(!d) return ""; let local=d; if(d.startsWith("55") && d.length>11) local=d.slice(2); const dd=local.slice(0,2); const body=local.slice(2); if(body.length>=9) return `(${dd}) ${body.slice(0,5)}-${body.slice(5,9)}`; if(body.length>4) return `(${dd}) ${body.slice(0,4)}-${body.slice(4)}`; if(body.length>0) return `(${dd}) ${body}`; return `(${dd}` }
     function delay(ms){ return new Promise(r=>setTimeout(r, ms)); }
+    function splitLines(text){ return String(text||"").replaceAll('\r','').split('\n'); }
 
     function qualityLabel(v){
       if(v==='frio') return '❄️ Frio';
@@ -151,7 +154,7 @@
       return v || '';
     }
 
-    function toast(msg, err){ const el=document.getElementById('toast'); el.textContent=msg; el.className='toast'+(err?' err':''); el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.display='none' }, 3000) }
+    function toast(msg, err){ const el=document.getElementById('toast'); el.textContent=msg; el.style.background = err? '#e11d48' : '#059669'; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.display='none' }, 3000) }
 
     // ------- Render queue
     const list = document.getElementById('queue-list');
@@ -161,7 +164,7 @@
         const row = document.createElement('div'); row.className='row';
         // radio
         const r = document.createElement('input'); r.type='radio'; r.name='manual'; r.className='radio'; r.checked = (selectedAgentId===a.id);
-        r.addEventListener('change', ()=>{ selectedAgentId = (selectedAgentId===a.id? null : a.id); renderQueue(); });
+        r.addEventListener('change', ()=>{ selectedAgentId = a.id; renderQueue(); });
         row.appendChild(r);
         // info
         const fx = document.createElement('div'); fx.style.flex='1';
@@ -198,12 +201,11 @@
     const sendBtn = document.getElementById('send-btn');
     phoneEl.addEventListener('input', ()=>{ phoneEl.value = formatBR(phoneEl.value) });
 
-    // ------- FUNÇÃO ÚNICA DE DISPARO (usada pelo form e pelo lote)
+    // ------- FUNÇÃO ÚNICA DE DISPARO
     async function dispatchLead(nm, ph, qv){
       if(!nm) { toast('Informe o nome', true); return false; }
       if(onlyDigits(ph).length < 10){ toast('Telefone inválido', true); return false; }
       if(!queue.length){ toast('Fila vazia', true); return false; }
-
       const target = queue.find(a=>a.id===selectedAgentId) || queue[0];
       const payload = {
         lead: { name: nm.trim(), phone: toE164BR(ph), quality: qualityLabel(qv), quality_value: qv },
@@ -212,43 +214,43 @@
         meta: { source: 'lead-router-ui', ts: new Date().toISOString() }
       };
 
-      try{
-        sendBtn.disabled = true;
+      try {
+        if(sendBtn) sendBtn.disabled = true;
         const res = await fetch(N8N_WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload), mode:'cors', credentials:'omit' });
         if(!res.ok) throw new Error('HTTP '+res.status);
         toast(`Lead enviado para ${target.name}`);
         // Rotaciona a fila
         if(selectedAgentId){
-          queue = [...queue.filter(a=>a.id!==selectedAgentId), queue.find(a=>a.id===selectedAgentId)];
+          const picked = queue.find(a=>a.id===selectedAgentId);
+          queue = [...queue.filter(a=>a.id!==selectedAgentId), picked];
           selectedAgentId = null;
         } else {
           if(queue.length>1){ const [first, ...rest] = queue; queue = [...rest, first]; }
         }
         renderQueue();
         return true;
-      }catch(err){
+      } catch (err) {
+        console.error(err);
         toast('Falha no envio. Verifique o n8n.', true);
         return false;
-      }finally{
-        sendBtn.disabled = false;
+      } finally {
+        if(sendBtn) sendBtn.disabled = false;
       }
     }
 
-    // ------- Submit do form normal
+    // Submit unitário
     document.getElementById('lead-form').addEventListener('submit', async (e)=>{
       e.preventDefault();
       const nm = (nameEl.value||'').trim();
       const ph = phoneEl.value;
-      const qv = quality || 'morno'; // se não escolher, manda Morno
+      const qv = quality || 'morno';
       const ok = await dispatchLead(nm, ph, qv);
-      if(ok){
-        nameEl.value=''; phoneEl.value=''; quality=''; qBtns.forEach(b=>b.classList.remove('active'));
-      }
+      if(ok){ nameEl.value=''; phoneEl.value=''; quality=''; qBtns.forEach(b=>b.classList.remove('active')); }
     });
 
     // ------- Lote
     function parseBulk(text){
-      const lines = (text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const lines = splitLines(text).map(s=>s.trim()).filter(Boolean);
       const out=[];
       for(let i=0;i<lines.length;i+=2){
         const nm = lines[i] || '';
@@ -268,10 +270,9 @@
       const items = parseBulk(bulkInput.value);
       if(!items.length){ toast('Nada para enviar (verifique o formato).', true); return; }
 
-      bulkSending = true; bulkBtn.disabled = true; sendBtn.disabled = true;
-      // Marca Morno visualmente
-      quality = 'morno';
-      qBtns.forEach(b=>b.classList.toggle('active', b.getAttribute('data-qv')==='morno'));
+      bulkSending = true; bulkBtn.disabled = true; if(sendBtn) sendBtn.disabled = true;
+      // Morno automático
+      quality = 'morno'; qBtns.forEach(b=>b.classList.toggle('active', b.getAttribute('data-qv')==='morno'));
 
       let sent = 0;
       for(const it of items){
@@ -280,10 +281,10 @@
         phoneEl.value = formatBR(it.phone);
         const ok = await dispatchLead(it.name, it.phone, 'morno');
         if(ok) sent++;
-        await delay(600); // pequeno intervalo entre envios
+        await delay(600);
       }
       toast(`Lista finalizada: ${sent}/${items.length} enviados.`);
-      bulkSending = false; bulkBtn.disabled = false; sendBtn.disabled = false;
+      bulkSending = false; bulkBtn.disabled = false; if(sendBtn) sendBtn.disabled = false;
       nameEl.value=''; phoneEl.value=''; quality=''; qBtns.forEach(b=>b.classList.remove('active'));
     });
 
