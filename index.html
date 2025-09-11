@@ -172,7 +172,7 @@
       addMsg('Digitando...', 'bot');
 
       try {
-        const response = await fetch('https://n8.lizapeproprio.shop/webhook/webhook', {
+        const response = await fetch('https://n8.lizapeproprio.shop/webhook/envio', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ msg: message })
@@ -201,3 +201,4 @@
   </script>
 </body>
 </html>
+
