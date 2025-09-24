@@ -75,7 +75,7 @@ const linksEvidencias = [
 
 const resultadosMensuraveis = {
   ate: "22/09/2025",
-  leads: { media: 57, pico: 119, picoData: "18/09", total: 694 },
+  leads: { media: 57, pico: 119, picoData: "18/09", total: 803 },
   interacoes: { media: 32, pico: 43 },
   conteudos: 70,
   decorados: 6,
