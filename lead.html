@@ -126,6 +126,22 @@ Telefone 2
     // ------- Config
     const N8N_WEBHOOK_URL = (window.ENV && window.ENV.N8N_WEBHOOK_URL) || window.N8N_LEAD_WEBHOOK || "https://n8.lizapeproprio.shop/webhook/lead";
 
+    // NOVO: endpoint para lote (derivado de /lead -> /lead-batch por padrão)
+    const N8N_BATCH_WEBHOOK_URL =
+      (window.ENV && window.ENV.N8N_BATCH_WEBHOOK_URL) ||
+      window.N8N_BATCH_LEAD_WEBHOOK ||
+      (() => {
+        try {
+          const u = new URL(N8N_WEBHOOK_URL);
+          const parts = u.pathname.split('/');
+          parts[parts.length - 1] = 'lead-batch';
+          u.pathname = parts.join('/');
+          return u.toString();
+        } catch {
+          return String(N8N_WEBHOOK_URL).replace(/\/lead(\b|$)/, '/lead-batch');
+        }
+      })();
+
     // ------- State
     let quality = "";
     let selectedAgentId = null; // manual selection
@@ -201,7 +217,7 @@ Telefone 2
     const sendBtn = document.getElementById('send-btn');
     phoneEl.addEventListener('input', ()=>{ phoneEl.value = formatBR(phoneEl.value) });
 
-    // ------- FUNÇÃO ÚNICA DE DISPARO
+    // ------- FUNÇÃO ÚNICA DE DISPARO (unitário)
     async function dispatchLead(nm, ph, qv){
       if(!nm) { toast('Informe o nome', true); return false; }
       if(onlyDigits(ph).length < 10){ toast('Telefone inválido', true); return false; }
@@ -248,7 +264,7 @@ Telefone 2
       if(ok){ nameEl.value=''; phoneEl.value=''; quality=''; qBtns.forEach(b=>b.classList.remove('active')); }
     });
 
-    // ------- Lote
+    // ------- Lote (NOVO: 1 POST com todos os leads)
     function parseBulk(text){
       const lines = splitLines(text).map(s=>s.trim()).filter(Boolean);
       const out=[];
@@ -260,32 +276,66 @@ Telefone 2
       return out;
     }
 
+    // monta o payload de batch
+    function buildBatchPayload(items, agents){
+      const leads = items.map(({name, phone}) => ({
+        name: String(name||'').trim(),
+        phone: toE164BR(phone),
+        quality: qualityLabel('morno'),
+        quality_value: 'morno'
+      }));
+      const assignees = agents.map(a => ({
+        name: a.name,
+        phone: toE164BR(a.phone)
+      }));
+      return {
+        batch: true,
+        meta: { source: 'lead-router-ui', ts: new Date().toISOString() },
+        routing: { mode: 'balanced', queue_snapshot: agents.map(({id,name,phone}) => ({id, name, phone: toE164BR(phone)})) },
+        leads,
+        assignees
+      };
+    }
+
     const bulkForm  = document.getElementById('bulk-form');
     const bulkInput = document.getElementById('bulk-input');
     const bulkBtn   = document.getElementById('bulk-send');
 
+    // Submit do Lote: envia tudo de uma vez para /lead-batch
     bulkForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
       if(bulkSending) return;
+
       const items = parseBulk(bulkInput.value);
-      if(!items.length){ toast('Nada para enviar (verifique o formato).', true); return; }
+      if(!items.length){ toast('Nada para enviar, verifique o formato.', true); return; }
+      if(!queue.length){ toast('Fila vazia de corretores.', true); return; }
 
       bulkSending = true; bulkBtn.disabled = true; if(sendBtn) sendBtn.disabled = true;
-      // Morno automático
+      // Marca Morno visualmente
       quality = 'morno'; qBtns.forEach(b=>b.classList.toggle('active', b.getAttribute('data-qv')==='morno'));
 
-      let sent = 0;
-      for(const it of items){
-        // Preenche visualmente o form
-        nameEl.value  = it.name;
-        phoneEl.value = formatBR(it.phone);
-        const ok = await dispatchLead(it.name, it.phone, 'morno');
-        if(ok) sent++;
-        await delay(1200);
+      try{
+        const payload = buildBatchPayload(items, queue);
+        const res = await fetch(N8N_BATCH_WEBHOOK_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload),
+          mode:'cors',
+          credentials:'omit'
+        });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+
+        // Sucesso, rotaciona a fila uma vez
+        if(queue.length>1){ const [first,...rest]=queue; queue=[...rest, first]; renderQueue(); }
+
+        toast(`Lista enviada, ${items.length} leads distribuídos igualmente.`);
+      } catch(err){
+        console.error(err);
+        toast('Falha no envio em lote, confira o n8n.', true);
+      } finally {
+        bulkSending = false; bulkBtn.disabled = false; if(sendBtn) sendBtn.disabled = false;
+        nameEl.value=''; phoneEl.value=''; quality=''; qBtns.forEach(b=>b.classList.remove('active'));
       }
-      toast(`Lista finalizada: ${sent}/${items.length} enviados.`);
-      bulkSending = false; bulkBtn.disabled = false; if(sendBtn) sendBtn.disabled = false;
-      nameEl.value=''; phoneEl.value=''; quality=''; qBtns.forEach(b=>b.classList.remove('active'));
     });
 
     // Add agent form
