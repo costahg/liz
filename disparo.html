@@ -214,7 +214,7 @@ Nome
 
       btn.disabled = true; btn.textContent = 'Enviando...';
       showToast('Enviando, aguarde');
-      logLine(`Disparo iniciado, ${pares} leads`);
+      logLine(`Enviando ${pares} leads...`);
 
       try {
         const res = await fetch(ENDPOINT, {
