@@ -233,7 +233,7 @@ Nome
 
         const resposta = (data && (data.resposta || data.message || JSON.stringify(data))) || 'Ok';
         showToast('Enviado com sucesso', 'ok');
-        logLine(`${resposta}`);
+        logLine(`Foi!`);
       } catch (err) {
         console.error(err);
         showToast('Erro ao enviar', 'err');
