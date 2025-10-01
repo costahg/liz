@@ -42,15 +42,13 @@
       border-radius: 18px;
       box-shadow: 0 18px 56px rgba(0, 0, 0, 0.35);
       overflow: hidden;
-      display: grid; grid-template-rows: auto 1fr auto;
+      display: grid;
+      /* remove a linha/“divisória” superior, não usamos mais um header */
+      grid-template-rows: 1fr auto;
     }
 
-    .card__header {
-      padding: 16px 18px;
-      background: linear-gradient(180deg, #133a2f, var(--panel));
-      border-bottom: 1px solid var(--border);
-      min-height: 8px;
-    }
+    /* header oculto, some a divisória */
+    .card__header { display: none }
 
     .card__body { padding: 16px; display: grid; gap: 12px }
 
@@ -105,16 +103,15 @@
     .toast--ok { border-color: rgba(46, 204, 113, .45) }
     .toast--err { border-color: rgba(255, 107, 107, .65) }
 
-    .log {
-      max-height: 120px; overflow: auto; background: #102e27; border: 1px solid var(--border);
-      border-radius: 10px; padding: 10px; font-size: 12px; color: #c1d9d2;
-    }
+    /* área de logs removida, mantendo classe apenas se precisar no futuro */
+    .log { display: none }
 
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0 }
   </style>
 </head>
 <body>
   <main class="card" role="region" aria-label="Formulário de disparo em massa">
+    <!-- header removido -->
     <header class="card__header" aria-hidden="true"></header>
 
     <form class="card__body" id="massa-form" autocomplete="off">
@@ -141,9 +138,7 @@ Nome
         <span id="contagem">0 Leads</span>
       </div>
 
-      <div class="field">
-        <div class="log" id="log" aria-live="polite"></div>
-      </div>
+      <!-- bloco de LOGS removido -->
     </form>
 
     <div class="actions">
@@ -158,7 +153,6 @@ Nome
     const listaEl = document.getElementById('lista');
     const btn = document.getElementById('enviar');
     const toast = document.getElementById('toast');
-    const log = document.getElementById('log');
     const contagem = document.getElementById('contagem');
 
     const ENDPOINT = 'https://n8.lizapeproprio.shop/webhook/massa';
@@ -175,15 +169,12 @@ Nome
     function contarLeads(texto) {
       const linhas = linhaLimpa(texto).split(/\r?\n/).map(l => l.trim());
       const compact = linhas.filter(l => l.length > 0);
-      const regexTel = /\+?\d[\d\s\-()]{10,}/;
       let pares = 0;
       for (let i = 0; i < compact.length; i += 2) {
         const nome = compact[i];
         const tel = compact[i + 1] || '';
         if (!nome) break;
-        if (nome && tel) {
-          pares++;
-        }
+        if (nome && tel) pares++;
       }
       return { pares };
     }
@@ -195,11 +186,8 @@ Nome
 
     listaEl.addEventListener('input', atualizarMetrica);
 
-    function logLine(text) {
-      const time = new Date().toLocaleTimeString();
-      log.textContent += `[${time}] ${text}\n`;
-      log.scrollTop = log.scrollHeight;
-    }
+    // logs desativados
+    const logLine = () => {};
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
