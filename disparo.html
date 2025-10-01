@@ -213,7 +213,7 @@ Nome
       if (pares === 0) { showToast('Formato inválido, use pares de nome e telefone', 'err'); listaEl.focus(); return }
 
       btn.disabled = true; btn.textContent = 'Enviando...';
-      showToast('Enviando para o n8n, aguarde');
+      showToast('Enviando, aguarde');
       logLine(`Disparo iniciado, ${pares} leads`);
 
       try {
@@ -233,10 +233,10 @@ Nome
 
         const resposta = (data && (data.resposta || data.message || JSON.stringify(data))) || 'Ok';
         showToast('Enviado com sucesso', 'ok');
-        logLine(`n8n respondeu: ${resposta}`);
+        logLine(`${resposta}`);
       } catch (err) {
         console.error(err);
-        showToast('Erro ao enviar para o n8n', 'err');
+        showToast('Erro ao enviar', 'err');
         logLine(`Falha: ${err.message}`);
       } finally {
         btn.disabled = false; btn.textContent = 'Enviar';
