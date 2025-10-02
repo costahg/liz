@@ -81,6 +81,26 @@
     .btn:active { transform: translateY(1px) }
     .btn:hover { filter: brightness(1.02) }
     .btn[disabled] { opacity: .6; cursor: not-allowed }
+
+    /* NOVO: linha do usuário com botão 1:1 à direita */
+    .user-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+    .btn-quiet {
+      background: linear-gradient(180deg, #155243 0%, #104338 100%);
+      color: #dff8ee;
+      border: 1px solid rgba(31,90,75,.6);
+      box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 -2px 0 rgba(0,0,0,.18);
+      font-weight: 800;
+      letter-spacing: .2px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      min-width: 96px;
+    }
+    .btn-quiet[disabled] { opacity: .55; cursor: not-allowed }
     .toast {
       border-radius: 10px; padding: 10px 12px; font-size: 13px;
       background: #113429; border: 1px solid var(--border); color: var(--text);
@@ -97,13 +117,31 @@
     <form class="card__body" id="massa-form" autocomplete="off">
       <div class="field">
         <label class="label" for="usuario">Usuário</label>
-        <select id="usuario" required>
-          <option value="" disabled selected>Selecione</option>
-          <option>Henrique</option>
-        <option>Flaviana</option>
-          <option>Beatriz</option>
-        </select>
+
+        <!-- NOVO: seletor + botão 1:1 na mesma linha -->
+        <div class="user-row">
+          <select id="usuario" required aria-describedby="aquecedor-help">
+            <option value="" disabled selected>Selecione</option>
+            <option>Henrique</option>
+            <option>Flaviana</option>
+            <option>Beatriz</option>
+          </select>
+
+          <button
+            type="button"
+            id="btn-aquecedor"
+            class="btn-quiet"
+            aria-live="polite"
+            aria-label="Alternar aquecedor 1:1 do usuário selecionado"
+            title="Alternar aquecedor 1:1"
+            disabled
+          >
+            1:1 🧊
+          </button>
+        </div>
+        <span id="aquecedor-help" class="sr-only">Botão indica se o aquecedor 1:1 está ligado ou desligado</span>
       </div>
+
       <div class="field">
         <label class="label" for="lista">Lista</label>
         <textarea id="lista" placeholder="Nome
@@ -129,6 +167,12 @@ Nome
     const btn = document.getElementById('enviar');
     const toast = document.getElementById('toast');
     const contagem = document.getElementById('contagem');
+
+    // NOVO: endpoints do n8n para status e toggle do aquecedor 1:1
+    const GET_STATUS = 'https://n8.lizapeproprio.shop/webhook/aquecedor-status'; // GET ?usuario=Nome
+    const TOGGLE_ENDPOINT = 'https://n8.lizapeproprio.shop/webhook/aquecedor-toggle'; // POST { usuario }
+
+    // já existia
     const ENDPOINT = 'https://n8.lizapeproprio.shop/webhook/massa';
 
     function showToast(msg, type = 'ok') {
@@ -244,6 +288,95 @@ Nome
 
     const logLine = () => {};
 
+    // NOVO: lógica do botão 1:1
+    const btnAquecedor = document.getElementById('btn-aquecedor');
+
+    function setAquecedorUI({ ligado, loading = false }) {
+      if (loading) {
+        btnAquecedor.textContent = '1:1 ...';
+        btnAquecedor.setAttribute('aria-busy', 'true');
+      } else {
+        btnAquecedor.textContent = ligado ? '1:1 🔥' : '1:1 🧊';
+        btnAquecedor.removeAttribute('aria-busy');
+        btnAquecedor.dataset.ligado = ligado ? '1' : '0';
+      }
+    }
+
+    async function fetchComTimeout(url, opts = {}, ms = 12000) {
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), ms);
+      try {
+        const res = await fetch(url, { ...opts, signal: c.signal });
+        clearTimeout(t);
+        return res;
+      } catch (e) {
+        clearTimeout(t);
+        throw e;
+      }
+    }
+
+    async function atualizarStatusAquecedor(usuario) {
+      if (!usuario) { btnAquecedor.disabled = true; setAquecedorUI({ ligado: false }); return }
+      btnAquecedor.disabled = true;
+      setAquecedorUI({ ligado: false, loading: true });
+      try {
+        const url = `${GET_STATUS}?usuario=${encodeURIComponent(usuario)}`;
+        const res = await fetchComTimeout(url, { method: 'GET' });
+        let data = null;
+        try { data = await res.json() } catch (_) {}
+        // esperado: { ligado: boolean } ou { status: 'on'|'off' }
+        const ligado = typeof data?.ligado === 'boolean'
+          ? data.ligado
+          : (String(data?.status || '').toLowerCase() === 'on');
+        setAquecedorUI({ ligado });
+      } catch (err) {
+        console.error(err);
+        showToast('Falha ao consultar 1:1 no n8n', 'err');
+        setAquecedorUI({ ligado: false });
+      } finally {
+        btnAquecedor.disabled = false;
+      }
+    }
+
+    usuarioEl.addEventListener('change', () => {
+      const usuario = usuarioEl.value;
+      atualizarStatusAquecedor(usuario);
+    });
+
+    btnAquecedor.addEventListener('click', async () => {
+      const usuario = usuarioEl.value;
+      if (!usuario) { showToast('Selecione um usuário', 'err'); usuarioEl.focus(); return }
+      btnAquecedor.disabled = true;
+      const estadoAtual = btnAquecedor.dataset.ligado === '1';
+      // otimista: alterna visualmente
+      setAquecedorUI({ ligado: !estadoAtual, loading: true });
+
+      try {
+        const res = await fetchComTimeout(TOGGLE_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuario })
+        });
+        let data = null;
+        try { data = await res.json() } catch (_) {}
+        // confirma status retornado após toggle
+        const ligado = typeof data?.ligado === 'boolean'
+          ? data.ligado
+          : (String(data?.status || '').toLowerCase() === 'on');
+
+        setAquecedorUI({ ligado });
+        showToast(`1:1 ${ligado ? 'ativado' : 'desativado'}`, 'ok');
+      } catch (err) {
+        console.error(err);
+        // reverte visual se falhar
+        setAquecedorUI({ ligado: estadoAtual });
+        showToast('Erro ao alternar 1:1', 'err');
+      } finally {
+        btnAquecedor.disabled = false;
+      }
+    });
+
+    // submissão já existente
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const usuario = usuarioEl.value;
@@ -289,6 +422,13 @@ Nome
     });
 
     atualizarMetrica();
+
+    // estado inicial do botão 1:1
+    (function initAquecedor() {
+      const usuario = usuarioEl.value;
+      if (usuario) atualizarStatusAquecedor(usuario);
+      else { btnAquecedor.disabled = true; setAquecedorUI({ ligado: false }); }
+    })();
   </script>
 </body>
 </html>
