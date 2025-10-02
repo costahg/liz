@@ -360,7 +360,6 @@ Nome
           : (String(data?.status || '').toLowerCase() === 'on');
 
         setAquecedorUI({ ligado });
-        showToast(` ${ligado ? 'ativado' : 'desativado'}`, 'ok');
       } catch (err) {
         console.error(err);
         // reverte visual se falhar
